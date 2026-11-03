@@ -123,6 +123,8 @@ h1.hd .shine{text-shadow:0 0 28px rgba(255,92,122,.45)}
 .frow{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;max-width:1200px;margin:22px auto 0;color:var(--mute);font-size:14px}
 
 /* ===== modal + forms ===== */
+.overlay{display:flex;align-items:normal;justify-content:center;padding:16px}
+.overlay>.modal{margin:auto}
 .overlay{position:fixed;inset:0;z-index:70;background:var(--ovbg);display:grid;place-items:center;padding:16px;overflow-y:auto}
 .modal{position:relative;width:min(500px,100%);background:var(--modalbg);border:1px solid var(--a);border-radius:26px;padding:34px 30px 28px;box-shadow:0 40px 100px rgba(0,0,0,.45)}
 .modal.wide{width:min(620px,100%)}
