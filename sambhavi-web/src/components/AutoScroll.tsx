@@ -9,6 +9,13 @@ const SPEEDS = [{ label: "Slow", px: 45 }, { label: "Normal", px: 85 }, { label:
 export default function AutoScroll() {
   const [on, setOn] = useState(false);
   const [speed, setSpeed] = useState(1);
+  const [away, setAway] = useState(true);   // false on a phone's first screen, so only the card is visible there
+  useEffect(() => {
+    const m = matchMedia("(max-width:900px)");
+    const f = () => setAway(!m.matches || scrollY > innerHeight * .6);
+    f(); addEventListener("scroll", f, { passive: true }); addEventListener("resize", f);
+    return () => { removeEventListener("scroll", f); removeEventListener("resize", f); };
+  }, []);
   const pos = useRef(0); const spd = useRef(SPEEDS[1].px);
   useEffect(() => { spd.current = SPEEDS[speed].px; }, [speed]);
 
@@ -32,7 +39,7 @@ export default function AutoScroll() {
   }, [on]);
 
   return (
-    <div className="autoscroll" role="group" aria-label="Auto scroll">
+    <div className="autoscroll" role="group" aria-label="Auto scroll" hidden={!away && !on}>
       <button className="as-main" onClick={() => setOn((v) => !v)} aria-pressed={on} data-cursor={on ? "Pause" : "Play"}>
         <span aria-hidden>{on ? "❚❚" : "▶"}</span> {on ? "Pause" : "Auto scroll"}
       </button>

@@ -32,6 +32,7 @@ export default function App() {
   const [toastMsg, setToastMsg] = useState<{ t: string; kind: "ok" | "err" } | null>(null);
   const [version, setVersion] = useState(0);
   const [unread, setUnread] = useState(0);
+  const [adminStart, setAdminStart] = useState<{ tab: "overview" | "chats"; key: number }>({ tab: "overview", key: 0 });
   const { scrollYProgress } = useScroll();
   const bar = useSpring(scrollYProgress, { stiffness: 120, damping: 24 });
   const isAdmin = user?.role === "Admin";
@@ -78,12 +79,17 @@ export default function App() {
   const [showTop, setShowTop] = useState(false);
   useEffect(() => { const f = () => setShowTop(scrollY > 900); f(); addEventListener("scroll", f, { passive: true }); return () => removeEventListener("scroll", f); }, []);
 
+  const openChats = useCallback(() => {
+    if (!user) { setAuth({ mode: "login", reason: "Log in to open your private room", then: "room" }); return; }
+    if (user.role === "Admin") { setAdminStart((a) => ({ tab: "chats", key: a.key + 1 })); go("admin"); } else go("room");
+  }, [user, go]);
+
   const showView: View = !user && view !== "home" ? "home" : view;
 
   return (
     <AppCtx.Provider value={{
       user, isAdmin, setUser: setUserState, logout, toast, go, version, refresh, unread, refreshUnread,
-      openAuth: (mode = "login", reason, then) => setAuth({ mode, reason, then }), openBooking,
+      openAuth: (mode = "login", reason, then) => setAuth({ mode, reason, then }), openBooking, openChats,
     }}>
       <Background />
       <motion.div className="progress" style={{ scaleX: bar }} />
@@ -91,7 +97,7 @@ export default function App() {
       <main>
         {showView === "room" && user && !isAdmin ? <PrivateRoom />
           : showView === "account" && user ? <Account />
-          : showView === "admin" && isAdmin ? <Admin />
+          : showView === "admin" && isAdmin ? <Admin key={adminStart.key} start={adminStart.tab} />
           : (<><Hero /><Marquee /><Packages /><Story /><PrivateTeaser /><Reviews /><CTA /></>)}
       </main>
       <Footer />

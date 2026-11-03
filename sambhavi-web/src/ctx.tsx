@@ -8,6 +8,8 @@ export interface Ctx {
   logout: () => void;
   openAuth: (mode?: "login" | "register", reason?: string, then?: "room") => void;
   openBooking: (pkgId?: number) => void;
+  /** client: opens the private room; reader (admin): opens the admin panel on the Private chats tab */
+  openChats: () => void;
   go: (view: "home" | "account" | "admin" | "room") => void;
   toast: (m: string, kind?: "ok" | "err") => void;
   /** unread private messages (client: from the reader, reader: from clients) */

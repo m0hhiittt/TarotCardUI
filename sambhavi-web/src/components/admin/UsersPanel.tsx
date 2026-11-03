@@ -30,11 +30,11 @@ export default function UsersPanel() {
         <thead><tr><th>Name</th><th>Contact</th><th>Joined</th><th>Role</th><th /></tr></thead>
         <tbody>{data?.items.map((u) => (
           <tr key={u.id}>
-            <td><b>{u.fullName}</b>{u.id === me?.id && <small>You</small>}</td>
-            <td>{u.email}<small>{u.phoneNumber}</small></td>
-            <td>{fmtDate(u.createdAt)}</td>
-            <td><select value={u.role} disabled={u.id === me?.id} onChange={(e) => role(u, e.target.value as Role)} aria-label={`Role for ${u.fullName}`}><option>User</option><option>Admin</option></select></td>
-            <td style={{ textAlign: "right" }}>{u.id !== me?.id && <button className="btn danger sm" onClick={() => setDel(u)}>Delete</button>}</td>
+            <td data-label="Name"><b>{u.fullName}</b>{u.id === me?.id && <small>You</small>}</td>
+            <td data-label="Contact"><span>{u.email}<small>{u.phoneNumber}</small></span></td>
+            <td data-label="Joined">{fmtDate(u.createdAt)}</td>
+            <td data-label="Role"><select value={u.role} disabled={u.id === me?.id} onChange={(e) => role(u, e.target.value as Role)} aria-label={`Role for ${u.fullName}`}><option>User</option><option>Admin</option></select></td>
+            <td className="act" style={{ textAlign: "right" }}>{u.id !== me?.id && <button className="btn danger sm" onClick={() => setDel(u)}>Delete</button>}</td>
           </tr>))}
         </tbody>
       </table>

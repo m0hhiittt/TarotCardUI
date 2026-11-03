@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { adminApi } from "../../api";
 import { useApp } from "../../ctx";
 import { useLoad } from "../../hooks";
@@ -12,9 +12,14 @@ import ChatPanel from "./ChatPanel";
 type Tab = "overview" | "bookings" | "reviews" | "chats" | "users" | "packages";
 
 /** Admin panel. Only reachable for accounts whose role is Admin (the API enforces it as well). */
-export default function Admin() {
+export default function Admin({ start = "overview" }: { start?: Tab }) {
   const { user, version, unread } = useApp();
-  const [tab, setTab] = useState<Tab>("overview");
+  const [tab, setTab] = useState<Tab>(start);
+  const tabsRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const box = tabsRef.current, on = box?.querySelector<HTMLElement>("button.on");
+    if (box && on) box.scrollTo({ left: on.offsetLeft - (box.clientWidth - on.offsetWidth) / 2, behavior: "smooth" });
+  }, [tab]);
   const d = useLoad(() => adminApi.dashboard(), [version]);
   const s = d.data;
 
@@ -25,7 +30,7 @@ export default function Admin() {
     <div className="page">
       <h1>Admin panel</h1>
       <p className="sub">Signed in as {user?.fullName}. Manage bookings, reviews, users and readings.</p>
-      <div className="tabs" role="tablist">
+      <div className="tabs" role="tablist" ref={tabsRef}>
         <TabBtn id="overview" label="Overview" />
         <TabBtn id="bookings" label="Bookings" count={s?.pendingBookings} />
         <TabBtn id="reviews" label="Reviews" count={s?.pendingReviews} />

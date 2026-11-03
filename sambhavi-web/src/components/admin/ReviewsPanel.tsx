@@ -30,11 +30,11 @@ export default function ReviewsPanel() {
         <thead><tr><th>Customer</th><th>Message</th><th>Date</th><th>Status</th><th /></tr></thead>
         <tbody>{data?.items.map((r) => (
           <tr key={r.id}>
-            <td><b>{r.userName}</b></td>
-            <td className="msgcell">{r.message}</td>
-            <td>{fmtDate(r.createdAt)}</td>
-            <td><span className={`tag ${r.isApproved ? "live" : "wait"}`}>{r.isApproved ? "Published" : "Waiting"}</span></td>
-            <td style={{ textAlign: "right" }}><div className="acts" style={{ justifyContent: "flex-end", display: "flex", gap: 8 }}>
+            <td data-label="Customer"><b>{r.userName}</b></td>
+            <td className="msgcell" data-label="Message"><span>{r.message}</span></td>
+            <td data-label="Date">{fmtDate(r.createdAt)}</td>
+            <td data-label="Status"><span className={`tag ${r.isApproved ? "live" : "wait"}`}>{r.isApproved ? "Published" : "Waiting"}</span></td>
+            <td className="act" style={{ textAlign: "right" }}><div className="acts" style={{ justifyContent: "flex-end", display: "flex", gap: 8 }}>
               {!r.isApproved && <button className="btn solid sm" onClick={() => approve(r)}>Approve</button>}
               <button className="btn danger sm" onClick={() => setDel(r)}>Delete</button></div></td>
           </tr>))}

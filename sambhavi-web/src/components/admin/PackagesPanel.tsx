@@ -40,8 +40,8 @@ export default function PackagesPanel() {
         <thead><tr><th>Name</th><th>Cards</th><th>Price</th><th>Description</th><th /></tr></thead>
         <tbody>{data?.map((p) => (
           <tr key={p.id}>
-            <td><b>{p.name}</b></td><td>{p.cardCount}</td><td>{inr(p.price)}</td><td className="msgcell">{p.description}</td>
-            <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+            <td data-label="Name"><b>{p.name}</b></td><td data-label="Cards">{p.cardCount}</td><td data-label="Price">{inr(p.price)}</td><td className="msgcell" data-label="About"><span>{p.description}</span></td>
+            <td className="act" style={{ textAlign: "right", whiteSpace: "nowrap" }}>
               <button className="btn line sm" onClick={() => { setEdit({ id: p.id, name: p.name, description: p.description ?? "", cardCount: String(p.cardCount), price: String(p.price) }); setErr(""); }}>Edit</button>{" "}
               <button className="btn danger sm" onClick={() => setDel(p)}>Delete</button></td>
           </tr>))}

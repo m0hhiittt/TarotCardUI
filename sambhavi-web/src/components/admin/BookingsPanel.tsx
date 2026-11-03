@@ -32,12 +32,12 @@ export default function BookingsPanel() {
         <thead><tr><th>#</th><th>Customer</th><th>Reading</th><th>When</th><th>Status</th><th /></tr></thead>
         <tbody>{data?.items.map((b) => (
           <tr key={b.id}>
-            <td>{b.id}</td>
-            <td><b>{b.userName}</b><small>{b.userEmail} · {b.userPhone}</small></td>
-            <td>{b.packageName}<small>{b.cardCount} {b.cardCount === 1 ? "card" : "cards"} · {inr(b.price)}</small>{b.question && <small title={b.question}>“{b.question.length > 60 ? b.question.slice(0, 60) + "…" : b.question}”</small>}</td>
-            <td>{fmtDateTime(b.appointmentDateTime)}</td>
-            <td><select value={b.status} onChange={(e) => setSt(b, e.target.value as BookingStatus)} aria-label={`Status of booking ${b.id}`}>{BOOKING_STATUSES.map((x) => <option key={x}>{x}</option>)}</select></td>
-            <td style={{ textAlign: "right" }}><button className="btn danger sm" onClick={() => setDel(b)}>Delete</button></td>
+            <td data-label="Booking">#{b.id}</td>
+            <td data-label="Customer"><span><b>{b.userName}</b><small>{b.userEmail} · {b.userPhone}</small></span></td>
+            <td data-label="Reading"><span>{b.packageName}<small>{b.cardCount} {b.cardCount === 1 ? "card" : "cards"} · {inr(b.price)}</small>{b.question && <small title={b.question}>“{b.question.length > 60 ? b.question.slice(0, 60) + "…" : b.question}”</small>}</span></td>
+            <td data-label="When">{fmtDateTime(b.appointmentDateTime)}</td>
+            <td data-label="Status"><select value={b.status} onChange={(e) => setSt(b, e.target.value as BookingStatus)} aria-label={`Status of booking ${b.id}`}>{BOOKING_STATUSES.map((x) => <option key={x}>{x}</option>)}</select></td>
+            <td className="act" style={{ textAlign: "right" }}><button className="btn danger sm" onClick={() => setDel(b)}>Delete</button></td>
           </tr>))}
         </tbody>
       </table>

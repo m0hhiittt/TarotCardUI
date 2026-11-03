@@ -1,15 +1,28 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useApp } from "../ctx";
 
 export default function Navbar({ view }: { view: string }) {
-  const { user, isAdmin, openAuth, openBooking, go, logout, unread } = useApp();
+  const { user, isAdmin, openAuth, openBooking, openChats, go, logout, unread } = useApp();
   const [small, setSmall] = useState(false);
+  const [menu, setMenu] = useState(false);
+  const wrap = useRef<HTMLDivElement>(null);
+
   useEffect(() => { const f = () => setSmall(scrollY > 60); f(); addEventListener("scroll", f, { passive: true }); return () => removeEventListener("scroll", f); }, []);
+  // close the phone dropdown on outside tap, Escape, or when the login state changes
+  useEffect(() => {
+    if (!menu) return;
+    const out = (e: Event) => { if (!wrap.current?.contains(e.target as Node)) setMenu(false); };
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setMenu(false);
+    document.addEventListener("pointerdown", out); addEventListener("keydown", esc);
+    return () => { document.removeEventListener("pointerdown", out); removeEventListener("keydown", esc); };
+  }, [menu]);
+  useEffect(() => setMenu(false), [user, view]);
 
   const jump = (id: string) => {
     if (view !== "home") { go("home"); setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }), 120); }
     else document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   };
+  const pick = (fn: () => void) => () => { setMenu(false); fn(); };
 
   return (
     <header className={`nav ${small ? "small" : ""}`}>
@@ -22,7 +35,9 @@ export default function Navbar({ view }: { view: string }) {
         <button onClick={() => jump("process")}>Process</button>
         <button onClick={() => jump("reviews")}>Reviews</button>
       </nav>
-      <div className="nav-cta">
+
+      {/* ---- desktop / tablet ---- */}
+      <div className="nav-cta desk">
         {user ? (<>
           {isAdmin && <button className="pill admin" onClick={() => go("admin")}>Admin panel{unread > 0 && <span className="cnt nav-cnt">{unread}</span>}</button>}
           {!isAdmin && <button className="pill" onClick={() => go("room")} title="Private room with the reader">🔒 Private room{unread > 0 && <span className="cnt nav-cnt">{unread}</span>}</button>}
@@ -34,6 +49,33 @@ export default function Navbar({ view }: { view: string }) {
           <button className="pill" onClick={() => openAuth("login")}>Log in</button>
         )}
         {!isAdmin && <button className="btn solid sm" onClick={() => openBooking()}>Book a reading</button>}
+      </div>
+
+      {/* ---- phone: name, then Log in; when logged in: Private chat + dropdown ---- */}
+      <div className="nav-cta mob" ref={wrap}>
+        {!user ? (
+          <button className="pill" onClick={() => openAuth("login")}>Log in</button>
+        ) : (<>
+          <button className="pill chatpill" onClick={openChats}>Private chat{unread > 0 && <span className="cnt nav-cnt">{unread}</span>}</button>
+          <button className={`pill menu-btn ${menu ? "open" : ""}`} onClick={() => setMenu((v) => !v)} aria-haspopup="menu" aria-expanded={menu} aria-label="Open menu">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M6 9l6 6 6-6" /></svg>
+          </button>
+          {menu && (
+            <div className="menu" role="menu">
+              <div className="menu-head"><b>{user.fullName}</b><small>{user.email}</small></div>
+              {isAdmin
+                ? <button role="menuitem" onClick={pick(() => go("admin"))}>Admin panel</button>
+                : <><button role="menuitem" onClick={pick(() => go("account"))}>My account</button>
+                    <button role="menuitem" onClick={pick(() => openBooking())}>Book a reading</button></>}
+              <div className="menu-sep" />
+              <button role="menuitem" onClick={pick(() => jump("readings"))}>Readings</button>
+              <button role="menuitem" onClick={pick(() => jump("process"))}>Process</button>
+              <button role="menuitem" onClick={pick(() => jump("reviews"))}>Reviews</button>
+              <div className="menu-sep" />
+              <button role="menuitem" className="out" onClick={pick(logout)}>Log out</button>
+            </div>
+          )}
+        </>)}
       </div>
     </header>
   );

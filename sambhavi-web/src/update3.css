@@ -1,0 +1,85 @@
+
+/* ================= UPDATE 3: paste this block at the very END of styles.css ================= */
+
+/* brand name in the hero line (bold italic Gloock, like the navbar name) */
+.brandname{font-family:var(--disp);font-style:italic;font-weight:700;letter-spacing:.02em}
+
+/* draw-card hint now lives inside .card-zone, so it always follows the card */
+.card-zone{position:relative;width:min(280px,64vw)}
+.card-zone .tilt{width:100%}
+.card-zone .draw-chip{top:-54px}
+.card-zone .ripple{left:0;top:0;width:100%;height:100%;translate:none;aspect-ratio:auto}
+
+/* navbar: phone variant is hidden on desktop */
+.nav-cta.mob{display:none}
+.menu{position:absolute;right:8px;top:calc(100% + 10px);width:min(270px,92vw);padding:8px;border-radius:18px;background:#1a080e;border:1px solid var(--a);box-shadow:0 24px 60px rgba(0,0,0,.6);display:grid;gap:2px;transform-origin:top right;animation:menupop .18s ease-out;z-index:60}
+@keyframes menupop{from{opacity:0;transform:translateY(-6px) scale(.97)}}
+.menu button{text-align:left;padding:12px 14px;border-radius:12px;font-size:15px;font-weight:600;color:var(--ink)}
+.menu button:hover,.menu button:focus-visible{background:var(--hot);color:var(--a)}
+.menu .out{color:var(--err)}
+.menu-head{padding:8px 14px 12px;display:grid;gap:0;border-bottom:1px solid var(--line);margin-bottom:6px}
+.menu-head b{font:var(--h3f);font-size:18px}.menu-head small{color:var(--mute);font-size:12px;overflow:hidden;text-overflow:ellipsis}
+.menu-sep{height:1px;background:var(--line);margin:6px 8px}
+.menu-btn svg{display:block;transition:transform .2s}.menu-btn.open svg{transform:rotate(180deg)}.menu-btn.open{border-color:var(--a);color:var(--a)}
+
+/* hidden attribute must win over display:flex (used to hide Auto scroll on a phone's first screen) */
+.autoscroll[hidden]{display:none}
+.toast{width:max-content;max-width:calc(100vw - 32px);text-align:center}
+
+/* ================= phones & small tablets ================= */
+@media(max-width:900px){
+  /* navbar: name, then Log in. Logged in: Private chat + dropdown */
+  .nav{width:calc(100vw - 20px);top:10px;padding:7px 8px 7px 16px;gap:8px}
+  .nav.small{width:calc(100vw - 20px);padding-block:6px}
+  .nav-cta.desk{display:none}.nav-cta.mob{display:flex;gap:6px;align-items:center}
+  .brand span{display:inline}.brand{font-size:19px;gap:8px}
+  .nav-cta .pill{padding:9px 14px;font-size:13px}
+  .chatpill{font-size:12.5px;padding:9px 12px}.menu-btn{padding:9px 11px}
+
+  /* first screen = only the card to draw; the rest of the page starts below it */
+  .hero{display:block;min-height:0;padding:0}
+  .hero-stage{height:100vh;height:100svh;min-height:540px;order:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:92px 20px 92px}
+  .card-zone{width:clamp(140px,min(64vw,calc((100vh - 330px) * .617)),300px);width:clamp(140px,min(64vw,calc((100svh - 330px) * .617)),300px)}
+  .reading{position:static;margin-top:26px;min-height:92px;max-width:340px}
+  .card-zone .draw-chip{top:-50px;font-size:12.5px;padding:9px 14px}
+  .hero-copy{padding:100px 20px 10px}
+  .scrollcue{display:flex;top:calc(100vh - 78px);top:calc(100svh - 78px);bottom:auto;left:50%}
+
+  /* rest of the page */
+  .section{padding:88px 18px 20px}
+  .page{padding:92px 16px 60px}
+  .stats{gap:26px}.stats b{font-size:32px}
+  .cta-big{padding:100px 20px 80px}
+  .footer{padding:30px 16px 28px}
+  .notes{margin-top:30px}.bento{margin-top:34px}
+  .pk{padding:24px}
+  .modal{padding:30px 20px 24px;border-radius:22px}
+  .overlay{align-items:start;padding:12px}
+  .chips{grid-template-columns:repeat(3,1fr)}
+  .tabs{gap:6px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:14px;margin-inline:-4px;padding-inline:4px;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}.tabs button{white-space:nowrap;flex:none;padding:9px 14px}
+  .chat-box{height:min(56vh,480px)}
+  .kpis{grid-template-columns:1fr 1fr;gap:12px}.kpi{padding:16px}.kpi b{font-size:32px}
+  .toolbar input,.toolbar select{max-width:none;min-width:0}
+  .autoscroll{bottom:16px}.totop{bottom:16px}
+}
+/* footer name is longer now: keep it inside the screen */
+.footer .word{font-size:clamp(30px,8.4vw,150px)}
+
+/* admin tables become cards on phones (no sideways swiping) */
+@media(max-width:700px){
+  .table-wrap{border:0;background:none;overflow:visible}
+  table{min-width:0;display:block}
+  thead{display:none}
+  tbody{display:grid;gap:12px}
+  tr{display:grid;gap:0;padding:12px 16px;border:1px solid var(--line);border-radius:14px;background:var(--glass)}
+  td{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:7px 0;border:0;text-align:right}
+  td::before{content:attr(data-label);color:var(--mute);font-size:11px;letter-spacing:.08em;text-transform:uppercase;text-align:left;flex:none;padding-top:4px}
+  td.act::before{content:none}
+  td.act{justify-content:flex-end;padding-top:10px;margin-top:4px;border-top:1px solid var(--line)}
+  td.act .acts{justify-content:flex-end}
+  td.msgcell{max-width:none}
+  td small{text-align:right}
+  tr:hover td{background:none}
+  td select{max-width:60%}
+}
+@media(max-width:380px){.brand svg{display:none}.nav{padding-left:14px}.chatpill{padding:9px 10px;font-size:12px}}
