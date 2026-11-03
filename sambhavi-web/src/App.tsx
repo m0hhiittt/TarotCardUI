@@ -19,7 +19,6 @@ import Account from "./components/Account";
 import Admin from "./components/admin/Admin";
 import PrivateRoom from "./components/PrivateRoom";
 import PrivateTeaser from "./components/PrivateTeaser";
-import AutoScroll from "./components/AutoScroll";
 
 type View = "home" | "account" | "admin" | "room";
 
@@ -110,7 +109,6 @@ export default function App() {
         {toastMsg && <motion.div className={`toast ${toastMsg.kind === "err" ? "err" : ""}`} key={toastMsg.t} role="status" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}>{toastMsg.t}</motion.div>}
       </AnimatePresence>
       {showTop && <button className="totop" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} aria-label="Back to top" data-cursor="Top">↑</button>}
-      {showView === "home" && <AutoScroll />}
       <Cursor />
     </AppCtx.Provider>
   );

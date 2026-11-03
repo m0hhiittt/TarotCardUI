@@ -332,3 +332,9 @@ td select{margin:0;padding:7px 10px;font-size:13px;border-radius:10px;width:auto
   td select{max-width:60%}
 }
 @media(max-width:380px){.brand svg{display:none}.nav{padding-left:14px}.chatpill{padding:9px 10px;font-size:12px}}
+html,body{overflow-x:clip;max-width:100%}
+@media(max-width:900px){
+  .hero-stage{justify-content:center}
+  .card-zone{margin:0 auto}
+  .reading{position:absolute;top:100%;left:50%;translate:-50% 0;margin-top:18px;width:min(340px,calc(100vw - 40px));min-height:0}
+}
