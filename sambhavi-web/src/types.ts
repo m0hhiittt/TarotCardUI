@@ -26,3 +26,7 @@ export interface Dashboard {
 export interface RegisterInput {
   firstName: string; lastName: string; email: string; phoneNumber: string; password: string; dob?: string | null;
 }
+
+// ---- private room (chat with the reader) ----
+export interface ChatMessage { id: number; fromReader: boolean; body: string; createdAt: string; isRead: boolean }
+export interface Conversation { userId: string; userName: string; lastMessage: string; lastFromReader: boolean; lastAt: string; unread: number }

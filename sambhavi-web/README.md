@@ -1,4 +1,4 @@
-# Sambhavi Shiva – React frontend (Crimson Velvet)
+# Shambhavi of Shiva – React frontend (Crimson Velvet)
 
 React 18 + TypeScript + Vite + framer-motion. Talks to the **TarotCardAPI** (.NET 8) with JWT.
 

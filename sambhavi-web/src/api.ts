@@ -5,7 +5,7 @@
  * - Any 401 clears the session (expired token) so the UI falls back to the login prompt.
  */
 import type {
-  AuthResponse, Booking, BookingStatus, Dashboard, Paged, Pkg, RegisterInput, Review, Role, User,
+  AuthResponse, Booking, BookingStatus, ChatMessage, Conversation, Dashboard, Paged, Pkg, RegisterInput, Review, Role, User,
 } from "./types";
 
 export const API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, "") ?? "https://localhost:7194";
@@ -109,6 +109,15 @@ export const reviewApi = {
   remove: (id: number) => del(`/api/reviews/${id}`),
 };
 
+// ---------- Private room (client <-> reader) ----------
+export const chatApi = {
+  /** my messages; with afterId only the newer ones (polling) */
+  mine: (afterId?: number) => get<ChatMessage[]>("/api/chat", { afterId }),
+  send: (body: string) => post<ChatMessage>("/api/chat", { body }),
+  clear: () => del("/api/chat"),
+  unread: () => get<{ count: number }>("/api/chat/unread"),
+};
+
 // ---------- Admin panel ----------
 export const adminApi = {
   dashboard: () => get<Dashboard>("/api/admin/dashboard"),
@@ -124,4 +133,10 @@ export const adminApi = {
   createPackage: (p: Omit<Pkg, "id">) => post<Pkg>("/api/admin/packages", p),
   updatePackage: (id: number, p: Omit<Pkg, "id">) => put<Pkg>(`/api/admin/packages/${id}`, p),
   deletePackage: (id: number) => del(`/api/admin/packages/${id}`),
+  // the reader's side of the private rooms
+  chatRooms: () => get<Conversation[]>("/api/admin/chat"),
+  chatUnread: () => get<{ count: number }>("/api/admin/chat/unread"),
+  chatThread: (userId: string, afterId?: number) => get<ChatMessage[]>(`/api/admin/chat/${userId}`, { afterId }),
+  chatReply: (userId: string, body: string) => post<ChatMessage>(`/api/admin/chat/${userId}`, { body }),
+  chatDelete: (userId: string) => del(`/api/admin/chat/${userId}`),
 };

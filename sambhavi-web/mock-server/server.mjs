@@ -9,7 +9,7 @@ const now = () => new Date().toISOString();
 const hash = (p) => crypto.createHash("sha256").update(p).digest("hex");
 const mkUser = (id, firstName, lastName, email, phone, role, pw) => ({ id, firstName, lastName, email, phoneNumber: phone, dob: null, role, createdAt: now(), _pw: hash(pw) });
 const users = [
-  mkUser("u-admin", "Sambhavi", "Shiva", "admin@sambhavishiva.com", "+919876543210", "Admin", "Admin@123"),
+  mkUser("u-admin", "Shambhavi", "of Shiva", "admin@sambhavishiva.com", "+919876543210", "Admin", "Admin@123"),
   mkUser("u-1", "Ananya", "Rao", "ananya@example.com", "+919812345678", "User", "Test@1234"),
 ];
 const packages = [

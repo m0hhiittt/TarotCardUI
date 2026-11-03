@@ -3,19 +3,19 @@ import { motion, animate, useInView, useMotionValue, useSpring, type Variants } 
 
 export function Reveal({ children, delay = 0, y = 44, className = "" }: { children: ReactNode; delay?: number; y?: number; className?: string }) {
   return (
-    <motion.div className={className} initial={{ opacity: 0, y, filter: "blur(10px)" }} whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+    <motion.div className={className} initial={{ opacity: 0, y }} whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-80px" }} transition={{ duration: .9, delay, ease: [.2, .7, .2, 1] }}>{children}</motion.div>
   );
 }
 
-const word: Variants = { hidden: { y: "115%", rotate: 4, opacity: 0, filter: "blur(14px)" }, show: (i: number) => ({ y: "0%", rotate: 0, opacity: 1, filter: "blur(0px)", transition: { duration: 1, delay: .08 * i, ease: [.2, .8, .2, 1] } }) };
+const word: Variants = { hidden: { y: "115%", rotate: 4, opacity: 0 }, show: (i: number) => ({ y: "0%", rotate: 0, opacity: 1, transition: { duration: 1, delay: .08 * i, ease: [.2, .8, .2, 1] } }) };
 /** Headline that blurs in word by word and softly glows in crimson. */
 export function Heading({ text, as: Tag = "h2", className = "", instant = false }: { text: string; as?: "h1" | "h2"; className?: string; instant?: boolean }) {
   const M = motion[Tag];
   return (
     <M className={`hd ${className}`} aria-label={text} initial="hidden" whileInView="show" animate={instant ? "show" : undefined} viewport={{ once: true, margin: "-60px" }}>
       {text.split(" ").map((w, i) => (
-        <span key={i} aria-hidden><span className="mask"><motion.span className="shine" variants={word} custom={i} style={{ animationDelay: `${i * 130}ms` }}>{w}</motion.span></span>{" "}</span>
+        <span key={i} aria-hidden><span className="mask"><motion.span className="shine" variants={word} custom={i}>{w}</motion.span></span>{" "}</span>
       ))}
     </M>
   );

@@ -7,12 +7,13 @@ import UsersPanel from "./UsersPanel";
 import BookingsPanel from "./BookingsPanel";
 import ReviewsPanel from "./ReviewsPanel";
 import PackagesPanel from "./PackagesPanel";
+import ChatPanel from "./ChatPanel";
 
-type Tab = "overview" | "bookings" | "reviews" | "users" | "packages";
+type Tab = "overview" | "bookings" | "reviews" | "chats" | "users" | "packages";
 
 /** Admin panel. Only reachable for accounts whose role is Admin (the API enforces it as well). */
 export default function Admin() {
-  const { user, version } = useApp();
+  const { user, version, unread } = useApp();
   const [tab, setTab] = useState<Tab>("overview");
   const d = useLoad(() => adminApi.dashboard(), [version]);
   const s = d.data;
@@ -28,6 +29,7 @@ export default function Admin() {
         <TabBtn id="overview" label="Overview" />
         <TabBtn id="bookings" label="Bookings" count={s?.pendingBookings} />
         <TabBtn id="reviews" label="Reviews" count={s?.pendingReviews} />
+        <TabBtn id="chats" label="Private chats" count={unread} />
         <TabBtn id="users" label="Users" />
         <TabBtn id="packages" label="Packages" />
       </div>
@@ -49,6 +51,7 @@ export default function Admin() {
       </>)}
       {tab === "bookings" && <BookingsPanel />}
       {tab === "reviews" && <ReviewsPanel />}
+      {tab === "chats" && <ChatPanel />}
       {tab === "users" && <UsersPanel />}
       {tab === "packages" && <PackagesPanel />}
     </div>
