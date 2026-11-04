@@ -5,8 +5,10 @@ export const BOOKING_STATUSES: BookingStatus[] = ["Pending", "Confirmed", "Compl
 
 export interface User {
   id: string; firstName: string; lastName: string; fullName: string;
-  email: string; phoneNumber: string; dob?: string | null; role: Role; createdAt: string;
+  email: string; phoneNumber: string; dob?: string | null; role: Role; emailVerified?: boolean; createdAt: string;
 }
+export type OtpPurpose = "login" | "register";
+export interface OtpSent { email: string; expiresInSeconds: number; resendInSeconds: number }
 export interface AuthResponse { token: string; expiresAtUtc: string; user: User }
 export interface Pkg { id: number; name: string; description?: string | null; cardCount: number; price: number }
 export interface Booking {
@@ -24,7 +26,7 @@ export interface Dashboard {
   totalReviews: number; pendingReviews: number; revenue: number;
 }
 export interface RegisterInput {
-  firstName: string; lastName: string; email: string; phoneNumber: string; password: string; dob?: string | null;
+  firstName: string; lastName: string; email: string; phoneNumber: string; dob?: string | null;
 }
 
 // ---- private room (chat with the reader) ----

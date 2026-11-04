@@ -5,7 +5,7 @@
  * - Any 401 clears the session (expired token) so the UI falls back to the login prompt.
  */
 import type {
-  AuthResponse, Booking, BookingStatus, ChatMessage, Conversation, Dashboard, Paged, Pkg, RegisterInput, Review, Role, User,
+  AuthResponse, Booking, OtpPurpose, OtpSent, BookingStatus, ChatMessage, Conversation, Dashboard, Paged, Pkg, RegisterInput, Review, Role, User,
 } from "./types";
 
 export const API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, "") ?? "https://localhost:7194";
@@ -71,23 +71,29 @@ const del = (p: string) => request<void>("DELETE", p);
 
 // ---------- Auth ----------
 export const authApi = {
-  async login(email: string, password: string): Promise<User> {
-    const r = await post<AuthResponse>("/api/auth/login", { email, password });
-    tokenStore.set(r.token); return r.user;
-  },
-  async register(input: RegisterInput): Promise<User> {
-    const r = await post<AuthResponse>("/api/auth/register", { ...input, dob: input.dob || null });
+  /** Step 1 of login: the server emails a 6-digit code (only for existing accounts). */
+  requestLoginOtp: (email: string) => post<OtpSent>("/api/auth/login/otp", { email }),
+  /** Step 1 of sign-up: the server checks the details and emails a code. The account is created only after the code is verified. */
+  requestRegisterOtp: (input: RegisterInput) => post<OtpSent>("/api/auth/register/otp", { ...input, dob: input.dob || null }),
+  resendOtp: (email: string, purpose: OtpPurpose) => post<OtpSent>("/api/auth/otp/resend", { email, purpose }),
+  /** Step 2 (both flows): verify the code. Logs in (or creates the account) and saves the token. */
+  async verifyOtp(email: string, code: string, purpose: OtpPurpose): Promise<User> {
+    const r = await post<AuthResponse>("/api/auth/otp/verify", { email, code, purpose });
     tokenStore.set(r.token); return r.user;
   },
   logout() { tokenStore.clear(); },
   /** Returns the logged-in user from the saved token, or null. */
   async current(): Promise<User | null> {
     if (!tokenStore.get()) return null;
-    try { return await get<User>("/api/auth/me"); } catch { tokenStore.clear(); return null; }
+    try {
+      const u = await get<User>("/api/auth/me");
+      // A session that was not created with an emailed code (e.g. an old password session) is not allowed in.
+      if (u.emailVerified === false) { tokenStore.clear(); return null; }
+      return u;
+    } catch { tokenStore.clear(); return null; }
   },
   updateProfile: (p: { firstName: string; lastName: string; phoneNumber: string; dob?: string | null }) =>
     put<User>("/api/auth/me", { ...p, dob: p.dob || null }),
-  changePassword: (currentPassword: string, newPassword: string) => post<void>("/api/auth/change-password", { currentPassword, newPassword }),
 };
 
 // ---------- Packages (public) ----------

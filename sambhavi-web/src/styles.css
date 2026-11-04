@@ -340,3 +340,9 @@ html,body{overflow-x:clip;max-width:100%}
   .card-zone{margin:0 auto}
   .reading{position:absolute;top:100%;left:50%;translate:-50% 0;margin-top:18px;width:min(340px,calc(100vw - 40px));min-height:0}
 }
+
+
+.otp{text-align:center;font-size:30px;letter-spacing:.5em;padding-left:.5em;font-weight:600;font-variant-numeric:tabular-nums}
+.otp::placeholder{letter-spacing:.35em;opacity:.35}
+.otpmeta{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px;font-size:13px;color:var(--mute)}
+.otpmeta button{color:var(--a);font-weight:600}.otpmeta button:disabled{color:var(--mute);cursor:default;font-weight:400}
