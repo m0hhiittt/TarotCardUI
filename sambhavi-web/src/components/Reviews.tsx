@@ -3,6 +3,7 @@ import { reviewApi } from "../api";
 import { useLoad } from "../hooks";
 import { useApp } from "../ctx";
 import { Heading, Reveal } from "./Motion";
+import MyReviews from "./MyReviews";
 
 export default function Reviews() {
   const { user, isAdmin, openAuth, toast, version, refresh } = useApp();
@@ -17,7 +18,7 @@ export default function Reviews() {
     try {
       const r = await reviewApi.create(text.trim());
       setText(""); refresh();
-      toast(r.isApproved ? "Thank you! Your review is live." : "Thank you! Your review will appear once it is approved.");
+      void r; toast("Thank you! Your review is live.");
     } catch (er: any) { setMsg(er.message); } finally { setBusy(false); }
   };
 
@@ -44,10 +45,11 @@ export default function Reviews() {
           {msg && <div className="msg err">{msg}</div>}
           <div className="row" style={{ alignItems: "center" }}>
             <button className="btn solid" disabled={busy}>{busy ? "Sending…" : "Post review"}</button>
-            <span className="hint">{isAdmin ? "Admin reviews go live immediately." : "Reviews appear after a quick approval."}</span>
+            <span className="hint">{isAdmin ? "Reviews go live immediately." : "Your review goes live right away. You can edit or delete it any time."}</span>
           </div>
         </form>
       </Reveal>
+      {user && <div className="myrev"><MyReviews hideWhenEmpty /></div>}
     </section>
   );
 }

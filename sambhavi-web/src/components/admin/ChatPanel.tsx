@@ -6,7 +6,7 @@ import ChatRoom from "../ChatRoom";
 import type { Conversation } from "../../types";
 
 /** The reader's side: list of clients' private rooms (newest / unanswered first) and the open conversation. */
-export default function ChatPanel() {
+export default function ChatPanel({ startUserId }: { startUserId?: string }) {
   const { refreshUnread } = useApp();
   const [rooms, setRooms] = useState<Conversation[] | null>(null);
   const [error, setError] = useState(""); const [sel, setSel] = useState<Conversation | null>(null);
@@ -14,6 +14,8 @@ export default function ChatPanel() {
   const reloadRooms = useCallback(() => {
     adminApi.chatRooms().then((r) => { setRooms(r); setError(""); setSel((s) => (s ? r.find((x) => x.userId === s.userId) ?? s : s)); }).catch((e) => setError(e.message));
   }, []);
+  // opened from a notification: jump straight into that client's room
+  useEffect(() => { if (startUserId && rooms && !sel) { const r = rooms.find((x) => x.userId === startUserId); if (r) setSel(r); } }, [startUserId, rooms]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     reloadRooms();
     const t = setInterval(() => { if (!document.hidden) reloadRooms(); }, 8000);

@@ -1,11 +1,12 @@
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { chatApi } from "../api";
 import { useApp } from "../ctx";
 import ChatRoom from "./ChatRoom";
 
 /** A client's private room with the reader. */
 export default function PrivateRoom() {
-  const { refreshUnread } = useApp();
+  const { refreshUnread, setViewing } = useApp();
+  useEffect(() => { setViewing("room"); return () => setViewing(""); }, [setViewing]);
   const load = useCallback((afterId?: number) => chatApi.mine(afterId), []);
   const send = useCallback((b: string) => chatApi.send(b), []);
   const clear = useCallback(() => chatApi.clear(), []);

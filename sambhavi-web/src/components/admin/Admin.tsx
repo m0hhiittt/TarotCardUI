@@ -12,14 +12,15 @@ import ChatPanel from "./ChatPanel";
 type Tab = "overview" | "bookings" | "reviews" | "chats" | "users" | "packages";
 
 /** Admin panel. Only reachable for accounts whose role is Admin (the API enforces it as well). */
-export default function Admin({ start = "overview" }: { start?: Tab }) {
-  const { user, version, unread } = useApp();
+export default function Admin({ start = "overview", startClient }: { start?: Tab; startClient?: string }) {
+  const { user, version, unread, setViewing } = useApp();
   const [tab, setTab] = useState<Tab>(start);
   const tabsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const box = tabsRef.current, on = box?.querySelector<HTMLElement>("button.on");
     if (box && on) box.scrollTo({ left: on.offsetLeft - (box.clientWidth - on.offsetWidth) / 2, behavior: "smooth" });
   }, [tab]);
+  useEffect(() => { setViewing(`admin:${tab}`); return () => setViewing(""); }, [tab, setViewing]);
   const d = useLoad(() => adminApi.dashboard(), [version]);
   const s = d.data;
 
@@ -29,11 +30,11 @@ export default function Admin({ start = "overview" }: { start?: Tab }) {
   return (
     <div className="page">
       <h1>Admin panel</h1>
-      <p className="sub">Signed in as {user?.fullName}. Manage bookings, reviews, users and readings.</p>
+      <p className="sub">Signed in as {user?.fullName}. Bookings are confirmed automatically. You can cancel or complete them, and delete any review.</p>
       <div className="tabs" role="tablist" ref={tabsRef}>
         <TabBtn id="overview" label="Overview" />
-        <TabBtn id="bookings" label="Bookings" count={s?.pendingBookings} />
-        <TabBtn id="reviews" label="Reviews" count={s?.pendingReviews} />
+        <TabBtn id="bookings" label="Bookings" count={s?.upcomingBookings} />
+        <TabBtn id="reviews" label="Reviews" />
         <TabBtn id="chats" label="Private chats" count={unread} />
         <TabBtn id="users" label="Users" />
         <TabBtn id="packages" label="Packages" />
@@ -44,19 +45,18 @@ export default function Admin({ start = "overview" }: { start?: Tab }) {
         <div className="kpis">
           <div className="kpi"><b>{s ? <CountUp to={s.totalUsers} /> : "–"}</b><span>Users</span></div>
           <div className="kpi"><b>{s ? <CountUp to={s.totalBookings} /> : "–"}</b><span>Bookings</span></div>
-          <div className={`kpi ${s?.pendingBookings ? "hot" : ""}`}><b>{s ? <CountUp to={s.pendingBookings} /> : "–"}</b><span>Bookings to confirm</span></div>
+          <div className={`kpi ${s?.upcomingBookings ? "hot" : ""}`}><b>{s ? <CountUp to={s.upcomingBookings} /> : "–"}</b><span>Upcoming bookings</span></div>
           <div className="kpi"><b>{s ? <CountUp to={s.totalReviews} /> : "–"}</b><span>Reviews</span></div>
-          <div className={`kpi ${s?.pendingReviews ? "hot" : ""}`}><b>{s ? <CountUp to={s.pendingReviews} /> : "–"}</b><span>Reviews to approve</span></div>
           <div className="kpi"><b>{s ? <CountUp to={s.revenue} prefix="₹" /> : "–"}</b><span>Revenue (confirmed &amp; completed)</span></div>
         </div>
         <div className="row">
-          <button className="btn solid sm" onClick={() => setTab("bookings")}>Review bookings</button>
-          <button className="btn line sm" onClick={() => setTab("reviews")}>Moderate reviews</button>
+          <button className="btn solid sm" onClick={() => setTab("bookings")}>View bookings</button>
+          <button className="btn line sm" onClick={() => setTab("reviews")}>View reviews</button>
         </div>
       </>)}
       {tab === "bookings" && <BookingsPanel />}
       {tab === "reviews" && <ReviewsPanel />}
-      {tab === "chats" && <ChatPanel />}
+      {tab === "chats" && <ChatPanel startUserId={startClient} />}
       {tab === "users" && <UsersPanel />}
       {tab === "packages" && <PackagesPanel />}
     </div>

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useApp } from "../ctx";
+import { Bell } from "../notifications";
 
 export default function Navbar({ view }: { view: string }) {
-  const { user, isAdmin, openAuth, openBooking, openChats, go, logout, unread } = useApp();
+  const { user, isAdmin, openAuth, openBooking, openChats, go, logout, unread, notify, openNotification } = useApp();
   const [small, setSmall] = useState(false);
   const [menu, setMenu] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
@@ -39,6 +40,7 @@ export default function Navbar({ view }: { view: string }) {
       {/* ---- desktop / tablet ---- */}
       <div className="nav-cta desk">
         {user ? (<>
+          <Bell n={notify} onOpen={openNotification} />
           {isAdmin && <button className="pill admin" onClick={() => go("admin")}>Admin panel{unread > 0 && <span className="cnt nav-cnt">{unread}</span>}</button>}
           {!isAdmin && <button className="pill" onClick={() => go("room")} title="Private room with the reader">🔒 Private room{unread > 0 && <span className="cnt nav-cnt">{unread}</span>}</button>}
           <button className="pill" onClick={() => go("account")} title="My account" style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -56,7 +58,8 @@ export default function Navbar({ view }: { view: string }) {
         {!user ? (
           <button className="pill" onClick={() => openAuth("login")}>Log in</button>
         ) : (<>
-          <button className="pill chatpill" onClick={openChats}>Private chat{unread > 0 && <span className="cnt nav-cnt">{unread}</span>}</button>
+          <button className="pill chatpill" onClick={openChats}><span className="long">Private chat</span><span className="short">Chat</span>{unread > 0 && <span className="cnt nav-cnt">{unread}</span>}</button>
+          <Bell n={notify} onOpen={openNotification} />
           <button className={`pill menu-btn ${menu ? "open" : ""}`} onClick={() => setMenu((v) => !v)} aria-haspopup="menu" aria-expanded={menu} aria-label="Open menu">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M6 9l6 6 6-6" /></svg>
           </button>

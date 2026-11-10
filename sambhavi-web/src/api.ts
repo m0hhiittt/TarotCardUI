@@ -5,7 +5,7 @@
  * - Any 401 clears the session (expired token) so the UI falls back to the login prompt.
  */
 import type {
-  AuthResponse, Booking, OtpPurpose, OtpSent, BookingStatus, ChatMessage, Conversation, Dashboard, Paged, Pkg, RegisterInput, Review, Role, User,
+  AuthResponse, Booking, NotificationList, OtpPurpose, OtpSent, BookingStatus, ChatMessage, Conversation, Dashboard, Paged, Pkg, RegisterInput, Review, Role, User,
 } from "./types";
 
 export const API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, "") ?? "https://localhost:7194";
@@ -112,7 +112,17 @@ export const reviewApi = {
   publicList: () => get<Review[]>("/api/reviews"),
   mine: () => get<Review[]>("/api/reviews/my"),
   create: (message: string) => post<Review>("/api/reviews", { message }),
+  /** edit my own review (the reader/admin cannot edit reviews, only delete them) */
+  update: (id: number, message: string) => put<Review>(`/api/reviews/${id}`, { message }),
   remove: (id: number) => del(`/api/reviews/${id}`),
+};
+
+// ---------- Notifications (each person only ever gets their own) ----------
+export const notificationApi = {
+  /** newest first; with afterId only the newer ones (the site polls this every few seconds) */
+  list: (afterId?: number) => get<NotificationList>("/api/notifications", { afterId }),
+  read: (id: number) => post<void>(`/api/notifications/${id}/read`),
+  readAll: () => post<void>("/api/notifications/read-all"),
 };
 
 // ---------- Private room (client <-> reader) ----------
@@ -134,7 +144,6 @@ export const adminApi = {
   setBookingStatus: (id: number, status: BookingStatus) => put<Booking>(`/api/admin/bookings/${id}/status`, { status }),
   deleteBooking: (id: number) => del(`/api/admin/bookings/${id}`),
   reviews: (q: { isApproved?: boolean; page?: number; pageSize?: number }) => get<Paged<Review>>("/api/admin/reviews", q),
-  approveReview: (id: number) => put<Review>(`/api/admin/reviews/${id}/approve`),
   deleteReview: (id: number) => del(`/api/admin/reviews/${id}`),
   createPackage: (p: Omit<Pkg, "id">) => post<Pkg>("/api/admin/packages", p),
   updatePackage: (id: number, p: Omit<Pkg, "id">) => put<Pkg>(`/api/admin/packages/${id}`, p),

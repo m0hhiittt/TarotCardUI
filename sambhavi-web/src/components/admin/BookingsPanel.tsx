@@ -36,7 +36,7 @@ export default function BookingsPanel() {
             <td data-label="Customer"><span><b>{b.userName}</b><small>{b.userEmail} · {b.userPhone}</small></span></td>
             <td data-label="Reading"><span>{b.packageName}<small>{b.cardCount} {b.cardCount === 1 ? "card" : "cards"} · {inr(b.price)}</small>{b.question && <small title={b.question}>“{b.question.length > 60 ? b.question.slice(0, 60) + "…" : b.question}”</small>}</span></td>
             <td data-label="When">{fmtDateTime(b.appointmentDateTime)}</td>
-            <td data-label="Status"><select value={b.status} onChange={(e) => setSt(b, e.target.value as BookingStatus)} aria-label={`Status of booking ${b.id}`}>{BOOKING_STATUSES.map((x) => <option key={x}>{x}</option>)}</select></td>
+            <td data-label="Status"><select value={b.status} onChange={(e) => setSt(b, e.target.value as BookingStatus)} aria-label={`Status of booking ${b.id}`}>{b.status === "Pending" && <option>Pending</option>}{BOOKING_STATUSES.map((x) => <option key={x}>{x}</option>)}</select></td>
             <td className="act" style={{ textAlign: "right" }}><button className="btn danger sm" onClick={() => setDel(b)}>Delete</button></td>
           </tr>))}
         </tbody>

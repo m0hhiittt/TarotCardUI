@@ -19,6 +19,8 @@ import Account from "./components/Account";
 import Admin from "./components/admin/Admin";
 import PrivateRoom from "./components/PrivateRoom";
 import PrivateTeaser from "./components/PrivateTeaser";
+import { NotifyPopups, useNotifications } from "./notifications";
+import type { AppNotification } from "./types";
 
 type View = "home" | "account" | "admin" | "room";
 
@@ -31,7 +33,10 @@ export default function App() {
   const [toastMsg, setToastMsg] = useState<{ t: string; kind: "ok" | "err" } | null>(null);
   const [version, setVersion] = useState(0);
   const [unread, setUnread] = useState(0);
-  const [adminStart, setAdminStart] = useState<{ tab: "overview" | "chats"; key: number }>({ tab: "overview", key: 0 });
+  type AdminTab = "overview" | "bookings" | "reviews" | "chats" | "users" | "packages";
+  const [adminStart, setAdminStart] = useState<{ tab: AdminTab; key: number; client?: string }>({ tab: "overview", key: 0 });
+  const viewing = useRef("");
+  const setViewing = useCallback((v: string) => { viewing.current = v; }, []);
   const { scrollYProgress } = useScroll();
   const bar = useSpring(scrollYProgress, { stiffness: 120, damping: 24 });
   const isAdmin = user?.role === "Admin";
@@ -70,6 +75,26 @@ export default function App() {
     return () => clearInterval(t);
   }, [user, refreshUnread]);
 
+  const notify = useNotifications(user, viewing);
+
+  const openChats = useCallback((client?: string) => {
+    if (!user) { setAuth({ mode: "login", reason: "Log in to open your private room", then: "room" }); return; }
+    if (user.role === "Admin") { setAdminStart((a) => ({ tab: "chats", key: a.key + 1, client })); go("admin"); } else go("room");
+  }, [user, go]);
+
+  /** a click on a pop-up or on a bell item: mark it read and take the person to the right place */
+  const openNotification = useCallback((n: AppNotification) => {
+    notify.markRead(n.id);
+    const adminTab = (tab: AdminTab) => { setAdminStart((a) => ({ tab, key: a.key + 1 })); go("admin"); };
+    if (user?.role === "Admin") {
+      if (n.target === "chats") openChats(n.refId ?? undefined);
+      else if (n.target === "users" || n.target === "bookings" || n.target === "reviews") adminTab(n.target);
+    } else {
+      if (n.target === "room") go("room");
+      else if (n.target === "bookings-mine") go("account");
+    }
+  }, [notify, user, go, openChats]);
+
   const openBooking = useCallback((pkg?: number) => {
     if (!user) { setAuth({ mode: "login", reason: "Log in to book your reading", then: pkg ?? "book" }); return; }
     setBooking({ pkg });
@@ -78,17 +103,13 @@ export default function App() {
   const [showTop, setShowTop] = useState(false);
   useEffect(() => { const f = () => setShowTop(scrollY > 900); f(); addEventListener("scroll", f, { passive: true }); return () => removeEventListener("scroll", f); }, []);
 
-  const openChats = useCallback(() => {
-    if (!user) { setAuth({ mode: "login", reason: "Log in to open your private room", then: "room" }); return; }
-    if (user.role === "Admin") { setAdminStart((a) => ({ tab: "chats", key: a.key + 1 })); go("admin"); } else go("room");
-  }, [user, go]);
-
   const showView: View = !user && view !== "home" ? "home" : view;
 
   return (
     <AppCtx.Provider value={{
       user, isAdmin, setUser: setUserState, logout, toast, go, version, refresh, unread, refreshUnread,
-      openAuth: (mode = "login", reason, then) => setAuth({ mode, reason, then }), openBooking, openChats,
+      notify, openNotification, setViewing,
+      openAuth: (mode = "login", reason, then) => setAuth({ mode, reason, then }), openBooking, openChats: () => openChats(),
     }}>
       <Background />
       <motion.div className="progress" style={{ scaleX: bar }} />
@@ -96,7 +117,7 @@ export default function App() {
       <main>
         {showView === "room" && user && !isAdmin ? <PrivateRoom />
           : showView === "account" && user ? <Account />
-          : showView === "admin" && isAdmin ? <Admin key={adminStart.key} start={adminStart.tab} />
+          : showView === "admin" && isAdmin ? <Admin key={adminStart.key} start={adminStart.tab} startClient={adminStart.client} />
           : (<><Hero /><Marquee /><Packages /><Story /><PrivateTeaser /><Reviews /><CTA /></>)}
       </main>
       <Footer />
@@ -104,6 +125,7 @@ export default function App() {
         {auth && <AuthModal key="a" mode={auth.mode} reason={auth.reason} onClose={() => setAuth(null)}
           onDone={() => { if (auth.then === "room") go("room"); else if (auth.then !== undefined) setBooking({ pkg: auth.then === "book" ? undefined : auth.then }); }} />}
       </AnimatePresence>
+      {user && <NotifyPopups n={notify} onOpen={openNotification} />}
       <AnimatePresence>{booking && <BookingModal key="b" pkgId={booking.pkg} onClose={() => setBooking(null)} />}</AnimatePresence>
       <AnimatePresence>
         {toastMsg && <motion.div className={`toast ${toastMsg.kind === "err" ? "err" : ""}`} key={toastMsg.t} role="status" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}>{toastMsg.t}</motion.div>}

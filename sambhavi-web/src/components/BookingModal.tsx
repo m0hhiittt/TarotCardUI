@@ -28,7 +28,7 @@ export default function BookingModal({ pkgId, onClose }: { pkgId?: number; onClo
     setBusy(true); setErr("");
     try {
       await bookingApi.create(pkg.id, when.toISOString(), q.trim());
-      refresh(); toast("Booked! You can follow it in your account."); onClose(); go("account");
+      refresh(); toast(`Booked and confirmed for ${fmtDateTime(when.toISOString())}.`); onClose(); go("account");
     } catch (e: any) { setErr(e.message); } finally { setBusy(false); }
   };
 
@@ -67,6 +67,7 @@ export default function BookingModal({ pkgId, onClose }: { pkgId?: number; onClo
 
       {step === 2 && pkg && when && (<>
         <div className="sum"><b>{inr(pkg.price)}</b>{pkg.name} · {pkg.cardCount} {pkg.cardCount === 1 ? "card" : "cards"}<br />{fmtDateTime(when.toISOString())}</div>
+        <p className="sub" style={{ margin: "0 0 12px", fontSize: 13 }}>Your booking is confirmed straight away. There is no approval step.</p>
         <label className="mlabel" htmlFor="q">What would you like to ask? (optional)</label>
         <textarea id="q" rows={4} maxLength={1000} placeholder="Share as little or as much as you like…" value={q} onChange={(e) => setQ(e.target.value)} />
         {err && <div className="msg err" role="alert">{err}</div>}

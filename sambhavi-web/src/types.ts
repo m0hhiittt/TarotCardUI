@@ -1,7 +1,8 @@
 // These mirror the DTOs of the .NET API (JSON is camelCase).
 export type Role = "Admin" | "User";
 export type BookingStatus = "Pending" | "Confirmed" | "Completed" | "Cancelled";
-export const BOOKING_STATUSES: BookingStatus[] = ["Pending", "Confirmed", "Completed", "Cancelled"];
+/** What the admin can set. New bookings are Confirmed straight away ("Pending" only exists on very old rows). */
+export const BOOKING_STATUSES: BookingStatus[] = ["Confirmed", "Completed", "Cancelled"];
 
 export interface User {
   id: string; firstName: string; lastName: string; fullName: string;
@@ -22,8 +23,8 @@ export interface Review {
 }
 export interface Paged<T> { items: T[]; page: number; pageSize: number; totalCount: number; totalPages: number }
 export interface Dashboard {
-  totalUsers: number; totalBookings: number; pendingBookings: number;
-  totalReviews: number; pendingReviews: number; revenue: number;
+  totalUsers: number; totalBookings: number; upcomingBookings: number;
+  totalReviews: number; revenue: number;
 }
 export interface RegisterInput {
   firstName: string; lastName: string; email: string; phoneNumber: string; dob?: string | null;
@@ -32,3 +33,10 @@ export interface RegisterInput {
 // ---- private room (chat with the reader) ----
 export interface ChatMessage { id: number; fromReader: boolean; body: string; createdAt: string; isRead: boolean }
 export interface Conversation { userId: string; userName: string; lastMessage: string; lastFromReader: boolean; lastAt: string; unread: number }
+
+export interface AppNotification {
+  id: number; type: string; title: string; body?: string | null;
+  /** where a click goes: users | bookings | reviews | chats (admin) or room | bookings-mine (client) */
+  target: string; refId?: string | null; createdAt: string; isRead: boolean;
+}
+export interface NotificationList { items: AppNotification[]; unreadCount: number }

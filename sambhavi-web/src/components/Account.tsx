@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { authApi, bookingApi, reviewApi } from "../api";
+import { authApi, bookingApi } from "../api";
 import { useLoad } from "../hooks";
 import { useApp } from "../ctx";
 import { fmtDate, fmtDateTime, inr } from "../util";
 import { Confirm } from "./Modal";
-import type { Booking, Review } from "../types";
+import MyReviews from "./MyReviews";
+import type { Booking } from "../types";
 
 /** A normal user's page: profile, password, own bookings and own reviews. */
 export default function Account() {
@@ -13,8 +14,7 @@ export default function Account() {
   const [p, setP] = useState({ firstName: u.firstName, lastName: u.lastName, phoneNumber: u.phoneNumber, dob: u.dob ?? "" });
   const [pm, setPm] = useState<{ k: "ok" | "err"; t: string } | null>(null); const [saving, setSaving] = useState(false);
   const bookings = useLoad(() => bookingApi.mine(), [version]);
-  const reviews = useLoad(() => reviewApi.mine(), [version]);
-  const [ask, setAsk] = useState<{ kind: "booking" | "review"; id: number } | null>(null);
+  const [ask, setAsk] = useState<{ id: number } | null>(null);
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault(); setSaving(true); setPm(null);
@@ -23,7 +23,7 @@ export default function Account() {
   const doAsk = async () => {
     if (!ask) return; const a = ask; setAsk(null);
     try {
-      if (a.kind === "booking") { await bookingApi.cancel(a.id); toast("Booking cancelled."); } else { await reviewApi.remove(a.id); toast("Review deleted."); }
+      await bookingApi.cancel(a.id); toast("Booking cancelled.");
       refresh();
     } catch (er: any) { toast(er.message, "err"); }
   };
@@ -64,7 +64,7 @@ export default function Account() {
               <div><b>{b.packageName}</b> <span className={`tag ${b.status}`}>{b.status}</span>
                 <small>{fmtDateTime(b.appointmentDateTime)} · {b.cardCount} {b.cardCount === 1 ? "card" : "cards"} · {inr(b.price)}</small>
                 {b.question && <small>“{b.question}”</small>}</div>
-              {(b.status === "Pending" || b.status === "Confirmed") && <button className="btn danger sm" onClick={() => setAsk({ kind: "booking", id: b.id })}>Cancel</button>}
+              {(b.status === "Pending" || b.status === "Confirmed") && <button className="btn danger sm" onClick={() => setAsk({ id: b.id })}>Cancel</button>}
             </div>
           ))}
         </div>
@@ -72,20 +72,10 @@ export default function Account() {
 
       <div className="panel" style={{ marginTop: 20 }}>
         <h3>My reviews</h3>
-        {reviews.data?.length === 0 && <p className="empty">You have not written a review yet. You can add one from the Reviews section on the home page.</p>}
-        <div className="list">
-          {reviews.data?.map((r: Review) => (
-            <div className="item" key={r.id}>
-              <div><span className={`tag ${r.isApproved ? "live" : "wait"}`}>{r.isApproved ? "Published" : "Waiting for approval"}</span><div style={{ marginTop: 6 }}>{r.message}</div><small>{fmtDate(r.createdAt)}</small></div>
-              <button className="btn danger sm" onClick={() => setAsk({ kind: "review", id: r.id })}>Delete</button>
-            </div>
-          ))}
-        </div>
+        <MyReviews />
       </div>
 
-      {ask && <Confirm title={ask.kind === "booking" ? "Cancel this booking?" : "Delete this review?"}
-        text={ask.kind === "booking" ? "The reading will be cancelled. You can always book another." : "This cannot be undone."}
-        action={ask.kind === "booking" ? "Cancel booking" : "Delete"} onYes={doAsk} onNo={() => setAsk(null)} />}
+      {ask && <Confirm title="Cancel this booking?" text="The reading will be cancelled. You can always book another." action="Cancel booking" onYes={doAsk} onNo={() => setAsk(null)} />}
     </div>
   );
 }
