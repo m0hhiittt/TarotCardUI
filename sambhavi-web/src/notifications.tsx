@@ -41,6 +41,13 @@ export function playChime() {
 }
 const readSound = () => { try { return localStorage.getItem(SOUND_KEY) !== "off"; } catch { return true; } };
 
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = "=".repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(base64);
+  return Uint8Array.from([...raw].map((char) => char.charCodeAt(0)));
+}
+
 // ---------- polling ----------
 const POLL_MS = 5000;
 
@@ -48,6 +55,7 @@ export interface NotifyState {
   items: AppNotification[]; unread: number;
   popups: AppNotification[]; closePopup: (id: number) => void;
   soundOn: boolean; setSoundOn: (v: boolean) => void;
+  pushSupported: boolean; pushEnabled: boolean; enablePush: () => Promise<void>;
   reload: () => void; markRead: (id: number) => void; markAllRead: () => void;
 }
 
@@ -57,9 +65,43 @@ export function useNotifications(user: User | null, viewing: React.MutableRefObj
   const [unread, setUnread] = useState(0);
   const [popups, setPopups] = useState<AppNotification[]>([]);
   const [soundOn, setSoundState] = useState(readSound);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const pushSupported = typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
   const lastId = useRef(0); const first = useRef(true);
   const soundRef = useRef(soundOn); soundRef.current = soundOn;
   const uid = user?.id;
+
+  const enablePush = useCallback(async () => {
+    if (!uid || !pushSupported) throw new Error("This browser does not support web push notifications.");
+    const permission = Notification.permission === "granted" ? "granted" : await Notification.requestPermission();
+    if (permission !== "granted") throw new Error("Please allow notifications in your browser settings.");
+    const registration = await navigator.serviceWorker.register("/sw.js");
+    const keyResponse = await notificationApi.pushPublicKey();
+    const keyBytes = urlBase64ToUint8Array(keyResponse.publicKey);
+    let subscription = await registration.pushManager.getSubscription();
+    if (!subscription) subscription = await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes });
+    const json = subscription.toJSON();
+    if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) throw new Error("Could not create a browser push subscription.");
+    await notificationApi.pushSubscribe({ endpoint: json.endpoint, p256dh: json.keys.p256dh, auth: json.keys.auth });
+    setPushEnabled(true);
+  }, [uid, pushSupported]);
+
+  useEffect(() => {
+    if (!uid || !pushSupported || Notification.permission !== "granted") { setPushEnabled(false); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const registration = await navigator.serviceWorker.register("/sw.js");
+        const subscription = await registration.pushManager.getSubscription();
+        if (subscription) {
+          const json = subscription.toJSON();
+          if (json.endpoint && json.keys?.p256dh && json.keys?.auth) await notificationApi.pushSubscribe({ endpoint: json.endpoint, p256dh: json.keys.p256dh, auth: json.keys.auth });
+          if (!cancelled) setPushEnabled(true);
+        } else if (!cancelled) setPushEnabled(false);
+      } catch { if (!cancelled) setPushEnabled(false); }
+    })();
+    return () => { cancelled = true; };
+  }, [uid, pushSupported]);
 
   const setSoundOn = useCallback((v: boolean) => { setSoundState(v); try { localStorage.setItem(SOUND_KEY, v ? "on" : "off"); } catch { /* ignore */ } if (v) { unlockSound(); playChime(); } }, []);
   const closePopup = useCallback((id: number) => setPopups((p) => p.filter((x) => x.id !== id)), []);
@@ -126,7 +168,7 @@ export function useNotifications(user: User | null, viewing: React.MutableRefObj
     notificationApi.readAll().catch(() => { /* ignore */ });
   }, []);
 
-  return { items, unread, popups, closePopup, soundOn, setSoundOn, reload, markRead, markAllRead };
+  return { items, unread, popups, closePopup, soundOn, setSoundOn, pushSupported, pushEnabled, enablePush, reload, markRead, markAllRead };
 }
 
 // ---------- look ----------
@@ -164,6 +206,7 @@ export function NotifyPopups({ n, onOpen }: { n: NotifyState; onOpen: (x: AppNot
 /** The bell in the navbar: unread count + the list. */
 export function Bell({ n, onOpen }: { n: NotifyState; onOpen: (x: AppNotification) => void }) {
   const [open, setOpen] = useState(false);
+  const [pushError, setPushError] = useState("");
   const box = useRef<HTMLDivElement>(null); const panel = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
@@ -189,8 +232,13 @@ export function Bell({ n, onOpen }: { n: NotifyState; onOpen: (x: AppNotificatio
               {n.unread > 0 && <button type="button" onClick={n.markAllRead}>Mark all read</button>}
             </span>
           </div>
+          {n.pushSupported && <div className="bp-push">
+            <span>{n.pushEnabled ? "Browser notifications are enabled" : "Get alerts even when this site is closed"}</span>
+            {!n.pushEnabled && <button type="button" onClick={async () => { setPushError(""); try { await n.enablePush(); } catch (e) { setPushError(e instanceof Error ? e.message : "Could not enable notifications."); } }}>Enable browser alerts</button>}
+            {pushError && <small role="alert">{pushError}</small>}
+          </div>}
           <div className="bp-list">
-            {n.items.length === 0 && <p className="bp-empty">Nothing yet. New sign-ups, bookings and messages will show up here.</p>}
+            {n.items.length === 0 && <p className="bp-empty">Nothing yet. New messages and account updates will show up here.</p>}
             {n.items.map((x) => (
               <button type="button" key={x.id} className={`bp-item ${x.isRead ? "" : "unread"}`} onClick={() => { setOpen(false); onOpen(x); }}>
                 <span className="nicon" aria-hidden>{ICON[x.type] ?? "🔔"}</span>

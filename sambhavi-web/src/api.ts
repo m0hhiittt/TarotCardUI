@@ -5,16 +5,19 @@
  * - Any 401 clears the session (expired token) so the UI falls back to the login prompt.
  */
 import type {
-  AuthResponse, Booking, NotificationList, OtpPurpose, OtpSent, BookingStatus, ChatMessage, Conversation, Dashboard, Paged, Pkg, RegisterInput, Review, Role, User,
+  AuthResponse, NotificationList, OtpPurpose, OtpSent, ChatMessage, Conversation, Dashboard, Paged, RegisterInput, Review, Role, User,
 } from "./types";
 
 export const API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, "") ?? "https://localhost:7194";
 
 const TOKEN_KEY = "ss_token";
+const USER_KEY = "ss_user";
 export const tokenStore = {
   get: () => { try { return localStorage.getItem(TOKEN_KEY); } catch { return null; } },
   set: (t: string) => { try { localStorage.setItem(TOKEN_KEY, t); } catch { /* ignore */ } },
-  clear: () => { try { localStorage.removeItem(TOKEN_KEY); } catch { /* ignore */ } },
+  saveUser: (u: User) => { try { localStorage.setItem(USER_KEY, JSON.stringify(u)); } catch { /* ignore */ } },
+  getUser: (): User | null => { try { const raw = localStorage.getItem(USER_KEY); return raw ? JSON.parse(raw) as User : null; } catch { return null; } },
+  clear: () => { try { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(USER_KEY); } catch { /* ignore */ } },
 };
 
 export class ApiError extends Error {
@@ -79,9 +82,22 @@ export const authApi = {
   /** Step 2 (both flows): verify the code. Logs in (or creates the account) and saves the token. */
   async verifyOtp(email: string, code: string, purpose: OtpPurpose): Promise<User> {
     const r = await post<AuthResponse>("/api/auth/otp/verify", { email, code, purpose });
-    tokenStore.set(r.token); return r.user;
+    tokenStore.set(r.token); tokenStore.saveUser(r.user); return r.user;
   },
-  logout() { tokenStore.clear(); },
+  async logout() {
+    // Remove this browser/device from the account before clearing its token.
+    try {
+      if ("serviceWorker" in navigator) {
+        const registration = await navigator.serviceWorker.getRegistration("/");
+        const subscription = await registration?.pushManager.getSubscription();
+        if (subscription) {
+          await notificationApi.pushUnsubscribe(subscription.endpoint);
+          await subscription.unsubscribe();
+        }
+      }
+    } catch { /* logout must still complete when the API or push service is unavailable */ }
+    tokenStore.clear();
+  },
   /** Returns the logged-in user from the saved token, or null. */
   async current(): Promise<User | null> {
     if (!tokenStore.get()) return null;
@@ -89,22 +105,17 @@ export const authApi = {
       const u = await get<User>("/api/auth/me");
       // A session that was not created with an emailed code (e.g. an old password session) is not allowed in.
       if (u.emailVerified === false) { tokenStore.clear(); return null; }
+      tokenStore.saveUser(u);
       return u;
-    } catch { tokenStore.clear(); return null; }
+    } catch (error) {
+      // Keep a valid saved token when the API is temporarily offline. A real 401
+      // is already handled centrally by request() and clears the token.
+      if (error instanceof ApiError && error.status === 401) { tokenStore.clear(); return null; }
+      return tokenStore.getUser();
+    }
   },
   updateProfile: (p: { firstName: string; lastName: string; phoneNumber: string; dob?: string | null }) =>
     put<User>("/api/auth/me", { ...p, dob: p.dob || null }),
-};
-
-// ---------- Packages (public) ----------
-export const packageApi = { list: () => get<Pkg[]>("/api/packages") };
-
-// ---------- Bookings (logged-in user) ----------
-export const bookingApi = {
-  create: (packageId: number, appointmentDateTime: string, question?: string) =>
-    post<Booking>("/api/bookings", { packageId, appointmentDateTime, question: question || null }),
-  mine: () => get<Booking[]>("/api/bookings/my"),
-  cancel: (id: number) => put<Booking>(`/api/bookings/${id}/cancel`),
 };
 
 // ---------- Reviews ----------
@@ -123,6 +134,9 @@ export const notificationApi = {
   list: (afterId?: number) => get<NotificationList>("/api/notifications", { afterId }),
   read: (id: number) => post<void>(`/api/notifications/${id}/read`),
   readAll: () => post<void>("/api/notifications/read-all"),
+  pushPublicKey: () => get<{ publicKey: string }>("/api/notifications/push/public-key"),
+  pushSubscribe: (subscription: { endpoint: string; p256dh: string; auth: string }) => post<void>("/api/notifications/push/subscribe", subscription),
+  pushUnsubscribe: (endpoint: string) => request<void>("DELETE", `/api/notifications/push/unsubscribe?endpoint=${encodeURIComponent(endpoint)}`),
 };
 
 // ---------- Private room (client <-> reader) ----------
@@ -140,14 +154,8 @@ export const adminApi = {
   users: (q: { search?: string; page?: number; pageSize?: number }) => get<Paged<User>>("/api/admin/users", q),
   changeRole: (id: string, role: Role) => put<User>(`/api/admin/users/${id}/role`, { role }),
   deleteUser: (id: string) => del(`/api/admin/users/${id}`),
-  bookings: (q: { status?: string; search?: string; page?: number; pageSize?: number }) => get<Paged<Booking>>("/api/admin/bookings", q),
-  setBookingStatus: (id: number, status: BookingStatus) => put<Booking>(`/api/admin/bookings/${id}/status`, { status }),
-  deleteBooking: (id: number) => del(`/api/admin/bookings/${id}`),
   reviews: (q: { isApproved?: boolean; page?: number; pageSize?: number }) => get<Paged<Review>>("/api/admin/reviews", q),
   deleteReview: (id: number) => del(`/api/admin/reviews/${id}`),
-  createPackage: (p: Omit<Pkg, "id">) => post<Pkg>("/api/admin/packages", p),
-  updatePackage: (id: number, p: Omit<Pkg, "id">) => put<Pkg>(`/api/admin/packages/${id}`, p),
-  deletePackage: (id: number) => del(`/api/admin/packages/${id}`),
   // the reader's side of the private rooms
   chatRooms: () => get<Conversation[]>("/api/admin/chat"),
   chatUnread: () => get<{ count: number }>("/api/admin/chat/unread"),

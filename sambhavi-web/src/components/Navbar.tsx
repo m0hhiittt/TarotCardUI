@@ -3,7 +3,7 @@ import { useApp } from "../ctx";
 import { Bell } from "../notifications";
 
 export default function Navbar({ view }: { view: string }) {
-  const { user, isAdmin, openAuth, openBooking, openChats, go, logout, unread, notify, openNotification } = useApp();
+  const { user, isAdmin, openAuth, openChats, go, logout, unread, notify, openNotification } = useApp();
   const [small, setSmall] = useState(false);
   const [menu, setMenu] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
@@ -50,7 +50,7 @@ export default function Navbar({ view }: { view: string }) {
         </>) : (
           <button className="pill" onClick={() => openAuth("login")}>Log in</button>
         )}
-        {!isAdmin && <button className="btn solid sm" onClick={() => openBooking()}>Book a reading</button>}
+        {!isAdmin && <button className="btn solid sm" onClick={openChats}>Start a chat</button>}
       </div>
 
       {/* ---- phone: name, then Log in; when logged in: Private chat + dropdown ---- */}
@@ -69,7 +69,7 @@ export default function Navbar({ view }: { view: string }) {
               {isAdmin
                 ? <button role="menuitem" onClick={pick(() => go("admin"))}>Admin panel</button>
                 : <><button role="menuitem" onClick={pick(() => go("account"))}>My account</button>
-                    <button role="menuitem" onClick={pick(() => openBooking())}>Book a reading</button></>}
+                    <button role="menuitem" onClick={pick(openChats)}>Start a chat session</button></>}
               <div className="menu-sep" />
               <button role="menuitem" onClick={pick(() => jump("readings"))}>Readings</button>
               <button role="menuitem" onClick={pick(() => jump("process"))}>Process</button>

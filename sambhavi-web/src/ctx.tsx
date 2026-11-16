@@ -1,5 +1,6 @@
 import { createContext, useContext } from "react";
 import type { AppNotification, User } from "./types";
+import type { TarotCard } from "./tarot";
 import type { NotifyState } from "./notifications";
 
 export interface Ctx {
@@ -8,7 +9,7 @@ export interface Ctx {
   setUser: (u: User | null) => void;
   logout: () => void;
   openAuth: (mode?: "login" | "register", reason?: string, then?: "room") => void;
-  openBooking: (pkgId?: number) => void;
+  openCardChat: (card: Pick<TarotCard, "name" | "num" | "text">) => void;
   /** client: opens the private room; reader (admin): opens the admin panel on the Private chats tab */
   openChats: () => void;
   go: (view: "home" | "account" | "admin" | "room") => void;

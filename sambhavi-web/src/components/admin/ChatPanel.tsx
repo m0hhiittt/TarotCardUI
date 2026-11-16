@@ -18,7 +18,7 @@ export default function ChatPanel({ startUserId }: { startUserId?: string }) {
   useEffect(() => { if (startUserId && rooms && !sel) { const r = rooms.find((x) => x.userId === startUserId); if (r) setSel(r); } }, [startUserId, rooms]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     reloadRooms();
-    const t = setInterval(() => { if (!document.hidden) reloadRooms(); }, 8000);
+    const t = setInterval(() => { if (!document.hidden) reloadRooms(); }, 15000);
     return () => clearInterval(t);
   }, [reloadRooms]);
 

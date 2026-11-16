@@ -14,7 +14,6 @@ import Reviews from "./components/Reviews";
 import CTA from "./components/CTA";
 import Footer from "./components/Footer";
 import AuthModal from "./components/AuthModal";
-import BookingModal from "./components/BookingModal";
 import Account from "./components/Account";
 import Admin from "./components/admin/Admin";
 import PrivateRoom from "./components/PrivateRoom";
@@ -28,12 +27,12 @@ export default function App() {
   const [user, setUserState] = useState<User | null>(null);
   const [ready, setReady] = useState(false);
   const [view, setView] = useState<View>("home");
-  const [auth, setAuth] = useState<{ mode: "login" | "register"; reason?: string; then?: number | "book" | "room" } | null>(null);
-  const [booking, setBooking] = useState<{ pkg?: number } | null>(null);
+  const [auth, setAuth] = useState<{ mode: "login" | "register"; reason?: string; then?: "room" } | null>(null);
+  const [sessionCard, setSessionCard] = useState<{ name: string; num: string; text: string } | null>(null);
   const [toastMsg, setToastMsg] = useState<{ t: string; kind: "ok" | "err" } | null>(null);
   const [version, setVersion] = useState(0);
   const [unread, setUnread] = useState(0);
-  type AdminTab = "overview" | "bookings" | "reviews" | "chats" | "users" | "packages";
+  type AdminTab = "overview" | "reviews" | "chats" | "users";
   const [adminStart, setAdminStart] = useState<{ tab: AdminTab; key: number; client?: string }>({ tab: "overview", key: 0 });
   const viewing = useRef("");
   const setViewing = useCallback((v: string) => { viewing.current = v; }, []);
@@ -47,7 +46,7 @@ export default function App() {
   }, []);
   const refresh = useCallback(() => setVersion((v) => v + 1), []);
   const go = useCallback((v: View) => { setView(v); window.scrollTo({ top: 0 }); }, []);
-  const logout = useCallback(() => { authApi.logout(); setUserState(null); setView("home"); toast("You are logged out."); }, [toast]);
+  const logout = useCallback(async () => { await authApi.logout(); setUserState(null); setView("home"); toast("You are logged out."); }, [toast]);
 
   // Restore the session from the saved token. An admin goes straight to the panel.
   useEffect(() => {
@@ -88,17 +87,18 @@ export default function App() {
     const adminTab = (tab: AdminTab) => { setAdminStart((a) => ({ tab, key: a.key + 1 })); go("admin"); };
     if (user?.role === "Admin") {
       if (n.target === "chats") openChats(n.refId ?? undefined);
-      else if (n.target === "users" || n.target === "bookings" || n.target === "reviews") adminTab(n.target);
+      else if (n.target === "users" || n.target === "reviews") adminTab(n.target);
     } else {
       if (n.target === "room") go("room");
-      else if (n.target === "bookings-mine") go("account");
+
     }
   }, [notify, user, go, openChats]);
 
-  const openBooking = useCallback((pkg?: number) => {
-    if (!user) { setAuth({ mode: "login", reason: "Log in to book your reading", then: pkg ?? "book" }); return; }
-    setBooking({ pkg });
-  }, [user]);
+  const openCardChat = useCallback((card: { name: string; num: string; text: string }) => {
+    setSessionCard(card);
+    if (!user) { setAuth({ mode: "login", reason: "Log in to share your tarot card and start a chat", then: "room" }); return; }
+    go("room");
+  }, [user, go]);
 
   const [showTop, setShowTop] = useState(false);
   useEffect(() => { const f = () => setShowTop(scrollY > 900); f(); addEventListener("scroll", f, { passive: true }); return () => removeEventListener("scroll", f); }, []);
@@ -109,13 +109,13 @@ export default function App() {
     <AppCtx.Provider value={{
       user, isAdmin, setUser: setUserState, logout, toast, go, version, refresh, unread, refreshUnread,
       notify, openNotification, setViewing,
-      openAuth: (mode = "login", reason, then) => setAuth({ mode, reason, then }), openBooking, openChats: () => openChats(),
+      openAuth: (mode = "login", reason, then) => setAuth({ mode, reason, then }), openCardChat, openChats: () => { setSessionCard(null); openChats(); },
     }}>
       <Background />
       <motion.div className="progress" style={{ scaleX: bar }} />
       <Navbar view={showView} />
       <main>
-        {showView === "room" && user && !isAdmin ? <PrivateRoom />
+        {showView === "room" && user && !isAdmin ? <PrivateRoom initialCard={sessionCard} onClearCard={() => setSessionCard(null)} />
           : showView === "account" && user ? <Account />
           : showView === "admin" && isAdmin ? <Admin key={adminStart.key} start={adminStart.tab} startClient={adminStart.client} />
           : (<><Hero /><Marquee /><Packages /><Story /><PrivateTeaser /><Reviews /><CTA /></>)}
@@ -123,10 +123,9 @@ export default function App() {
       <Footer />
       <AnimatePresence>
         {auth && <AuthModal key="a" mode={auth.mode} reason={auth.reason} onClose={() => setAuth(null)}
-          onDone={() => { if (auth.then === "room") go("room"); else if (auth.then !== undefined) setBooking({ pkg: auth.then === "book" ? undefined : auth.then }); }} />}
+          onDone={() => { if (auth.then === "room") go("room"); }} />}
       </AnimatePresence>
       {user && <NotifyPopups n={notify} onOpen={openNotification} />}
-      <AnimatePresence>{booking && <BookingModal key="b" pkgId={booking.pkg} onClose={() => setBooking(null)} />}</AnimatePresence>
       <AnimatePresence>
         {toastMsg && <motion.div className={`toast ${toastMsg.kind === "err" ? "err" : ""}`} key={toastMsg.t} role="status" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}>{toastMsg.t}</motion.div>}
       </AnimatePresence>

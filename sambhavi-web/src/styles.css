@@ -381,3 +381,7 @@ html,body{overflow-x:clip;max-width:100%}
 }
 @media(max-width:420px){.chatpill .long{display:none}.chatpill .short{display:inline}}
 @media(max-width:380px){.nav-cta.mob{gap:4px}.bell-btn{padding:9px 9px}.chatpill{padding:9px 9px}.menu-btn{padding:9px 9px}}
+
+.bp-push{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:9px;padding:12px 16px;background:rgba(241,185,138,.07);border-bottom:1px solid var(--line);font-size:12px;color:var(--mute)}
+.bp-push button{border:1px solid var(--a);border-radius:999px;padding:7px 11px;color:var(--a);font-weight:700;font-size:11px}
+.bp-push small{width:100%;color:#ffb4a9}

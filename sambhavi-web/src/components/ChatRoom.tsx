@@ -17,7 +17,7 @@ interface Props {
   onActivity?: () => void;
 }
 
-const POLL_MS = 4000;
+const POLL_MS = 5000;
 const time = (iso: string) => new Date(iso).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" });
 const dayLabel = (iso: string) => {
   const d = new Date(iso), t = new Date(), y = new Date(); y.setDate(t.getDate() - 1);

@@ -6,7 +6,7 @@ import { useApp } from "../ctx";
 import { CountUp, Heading, Magnetic } from "./Motion";
 
 export default function Hero() {
-  const { openBooking, user } = useApp();
+  const { openCardChat } = useApp();
   const [flip, setFlip] = useState(false);
   const [everDrawn, setEverDrawn] = useState(false);
   const [i, setI] = useState(0);
@@ -55,7 +55,7 @@ export default function Hero() {
 
         <div className="reading">
           {flip
-            ? <><b>{card.name}.</b> {card.text}<br /><button className="linkbtn" onClick={() => openBooking()}>Want a personal reading? Book one →</button></>
+            ? <><b>{card.name}.</b> {card.text}<br /><button className="linkbtn" onClick={() => openCardChat(card)}>Share this card in a private chat →</button></>
             : "Tap the card to draw yours."}
         </div>
       </div>
@@ -64,7 +64,7 @@ export default function Hero() {
         <motion.p className="kicker" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .1 }}>Tarot readings by <span className="brandname">Shambhavi of Shiva</span></motion.p>
         <Heading as="h1" text="Ask one question. Pull one card." instant />
         <motion.p className="lede" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .9 }}>
-          Honest, intuitive guidance for love, work and the decisions in between. Your answer arrives within 24 hours, and a single card starts at ₹50.
+          Honest, intuitive guidance for love, work and the decisions in between. Draw a card for free, then chat privately with the tarot reader for a test session of ₹50.
         </motion.p>
 
         <motion.div className="howdraw" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1 }}>
@@ -73,7 +73,7 @@ export default function Hero() {
         </motion.div>
 
         <motion.div className="row" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.1 }}>
-          <Magnetic><button className="btn solid lg" style={{ padding: "16px 30px" }} onClick={() => openBooking()}>{user ? "Book a reading" : "Log in to book"}</button></Magnetic>
+          <Magnetic><button className="btn solid lg" style={{ padding: "16px 30px" }} onClick={() => document.getElementById("hero")?.scrollIntoView({ behavior: "smooth" })}>Draw your card above</button></Magnetic>
           <Magnetic><button className="btn line lg" style={{ padding: "16px 30px" }} onClick={toNext}>See prices</button></Magnetic>
         </motion.div>
         <motion.div className="stats" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.4 }}>

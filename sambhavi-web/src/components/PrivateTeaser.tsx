@@ -11,8 +11,8 @@ export default function PrivateTeaser() {
         <div>
           <p className="kicker">Incognito mode</p>
           <Heading text="Prefer to talk it through privately?" />
-          <p className="sub">Some questions are too personal for a form. Open your private room and talk with Shambhavi one to one.</p>
-          {!isAdmin && <button className="btn solid" style={{ marginTop: 26 }} onClick={open}>{user ? "Open my private room" : "Log in to open it"}</button>}
+          <p className="sub">Draw a card, share your question and speak directly with Shambhavi in a private chat session.</p>
+          {!isAdmin && <button className="btn solid" style={{ marginTop: 26 }} onClick={open}>{user ? "Open my private room" : "Start a chat session"}</button>}
         </div>
         <Reveal>
           <ul className="teaser-list">
