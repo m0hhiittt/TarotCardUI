@@ -41,12 +41,27 @@ export function playChime() {
 }
 const readSound = () => { try { return localStorage.getItem(SOUND_KEY) !== "off"; } catch { return true; } };
 
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
+
+function urlBase64ToArrayBuffer(base64String: string): ArrayBuffer {
   const padding = "=".repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+
+  const base64 = (base64String + padding)
+    .replace(/-/g, "+")
+    .replace(/_/g, "/");
+
   const raw = atob(base64);
-  return Uint8Array.from([...raw].map((char) => char.charCodeAt(0)));
+
+  const bytes = Uint8Array.from(
+    [...raw].map((char) => char.charCodeAt(0))
+  );
+
+  const buffer = new ArrayBuffer(bytes.byteLength);
+
+  new Uint8Array(buffer).set(bytes);
+
+  return buffer;
 }
+
 
 // ---------- polling ----------
 const POLL_MS = 5000;
@@ -77,10 +92,15 @@ export function useNotifications(user: User | null, viewing: React.MutableRefObj
     if (permission !== "granted") throw new Error("Please allow notifications in your browser settings.");
     const registration = await navigator.serviceWorker.register("/sw.js");
     const keyResponse = await notificationApi.pushPublicKey();
-    const keyBytes = urlBase64ToUint8Array(keyResponse.publicKey);
-    let subscription = await registration.pushManager.getSubscription();
-    if (!subscription) subscription = await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes });
-    const json = subscription.toJSON();
+const applicationServerKey = urlBase64ToArrayBuffer(
+  keyResponse.publicKey
+);    let subscription = await registration.pushManager.getSubscription();
+if (!subscription) {
+  subscription = await registration.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey
+  });
+}    const json = subscription.toJSON();
     if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) throw new Error("Could not create a browser push subscription.");
     await notificationApi.pushSubscribe({ endpoint: json.endpoint, p256dh: json.keys.p256dh, auth: json.keys.auth });
     setPushEnabled(true);
